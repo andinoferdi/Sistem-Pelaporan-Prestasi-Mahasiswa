@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+//logger middleware
 func LoggerMiddleware(c *fiber.Ctx) error {
 	start := time.Now()
 	fmt.Printf("[%s] %s %s\n", start.Format("2006-01-02 15:04:05"), c.Method(), c.Path())

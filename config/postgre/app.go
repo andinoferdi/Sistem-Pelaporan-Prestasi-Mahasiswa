@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// setup fiber app with db
 func NewApp(db *sql.DB) *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -17,4 +18,3 @@ func NewApp(db *sql.DB) *fiber.App {
 	})
 	return app
 }
-

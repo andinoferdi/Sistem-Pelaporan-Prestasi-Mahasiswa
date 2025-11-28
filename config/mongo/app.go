@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// setup fiber app
 func NewApp() *fiber.App {
 	app := fiber.New(fiber.Config{
 		BodyLimit: 10 * 1024 * 1024,
@@ -19,4 +20,3 @@ func NewApp() *fiber.App {
 
 	return app
 }
-

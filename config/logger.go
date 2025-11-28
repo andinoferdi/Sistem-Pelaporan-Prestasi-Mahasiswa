@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// setup logger
 func GetLogger() *log.Logger {
 	if err := os.MkdirAll("logs", 0755); err != nil {
 		log.Fatal("Failed to create logs directory:", err)
@@ -17,4 +18,3 @@ func GetLogger() *log.Logger {
 
 	return log.New(logFile, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
 }
-

@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+//auth required middleware
 func AuthRequired() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
@@ -41,6 +42,7 @@ func AuthRequired() fiber.Handler {
 	}
 }
 
+//role required middleware
 func RoleRequired(allowedRoles ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		roleID, ok := c.Locals("role_id").(string)
@@ -64,6 +66,7 @@ func RoleRequired(allowedRoles ...string) fiber.Handler {
 	}
 }
 
+//permission required middleware
 func PermissionRequired(db *sql.DB, permission string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userID, ok := c.Locals("user_id").(string)

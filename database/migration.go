@@ -13,6 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// schema postgresql
 const postgresSchemaSQL = `DROP EXTENSION IF EXISTS "uuid-ossp" CASCADE;
 
 DROP TABLE IF EXISTS achievement_references CASCADE;
@@ -121,6 +122,7 @@ CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
 CREATE TRIGGER update_achievement_references_updated_at BEFORE UPDATE ON achievement_references
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();`
 
+// sample data postgresql
 const postgresSampleDataSQL = `-- Sample Data untuk PostgreSQL
 -- Jalankan file ini setelah menjalankan postgre_schema.sql
 
@@ -306,7 +308,7 @@ JOIN users u ON s.user_id = u.id
 WHERE u.username = 'mahasiswa3'
 LIMIT 1;`
 
-// RunMigrations menjalankan migrasi PostgreSQL dan MongoDB secara berurutan.
+// jalankan migrasi
 func RunMigrations(postgresDB *sql.DB, mongoDB *mongo.Database) error {
 	log.Println("Starting database migrations...")
 
@@ -327,6 +329,7 @@ func RunMigrations(postgresDB *sql.DB, mongoDB *mongo.Database) error {
 	return nil
 }
 
+// migrasi postgresql
 func runPostgresMigrations(db *sql.DB) error {
 	log.Println("Running PostgreSQL schema and seed migrations...")
 
@@ -353,6 +356,7 @@ func runPostgresMigrations(db *sql.DB) error {
 	return nil
 }
 
+// ambil student ids
 func fetchStudentIDs(db *sql.DB) (map[string]string, error) {
 	rows, err := db.Query(`
 		SELECT s.id, u.username
@@ -381,6 +385,7 @@ func fetchStudentIDs(db *sql.DB) (map[string]string, error) {
 	return studentIDs, nil
 }
 
+// migrasi mongodb
 func runMongoMigrations(db *mongo.Database, studentIDs map[string]string) error {
 	log.Println("Running MongoDB migrations...")
 
@@ -403,6 +408,7 @@ func runMongoMigrations(db *mongo.Database, studentIDs map[string]string) error 
 	return nil
 }
 
+// hapus collection jika ada
 func dropCollectionIfExists(ctx context.Context, db *mongo.Database, collectionName string) error {
 	names, err := db.ListCollectionNames(ctx, bson.M{"name": collectionName})
 	if err != nil {
@@ -421,6 +427,7 @@ func dropCollectionIfExists(ctx context.Context, db *mongo.Database, collectionN
 	return nil
 }
 
+// buat index achievements
 func createAchievementIndexes(ctx context.Context, db *mongo.Database) error {
 	collection := db.Collection("achievements")
 
@@ -454,6 +461,7 @@ func createAchievementIndexes(ctx context.Context, db *mongo.Database) error {
 	return nil
 }
 
+// seed data achievements
 func seedAchievementData(ctx context.Context, db *mongo.Database, studentIDs map[string]string) error {
 	log.Println("Seeding MongoDB achievements collection...")
 
@@ -613,6 +621,7 @@ func seedAchievementData(ctx context.Context, db *mongo.Database, studentIDs map
 	return nil
 }
 
+// ambil student id by username
 func studentIDFor(studentIDs map[string]string, username string) (string, error) {
 	id, ok := studentIDs[username]
 	if !ok || id == "" {

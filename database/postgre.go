@@ -9,6 +9,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
+//koneksi postgresql
 func ConnectDB() *sql.DB {
 	dsn := os.Getenv("DB_DSN")
 	if dsn == "" {

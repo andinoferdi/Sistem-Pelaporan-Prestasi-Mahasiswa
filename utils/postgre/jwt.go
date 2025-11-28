@@ -9,6 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+//jwt claims
 type JWTClaims struct {
 	UserID string `json:"user_id"`
 	Email  string `json:"email"`
@@ -18,6 +19,7 @@ type JWTClaims struct {
 
 var jwtSecret = []byte(getJWTSecret())
 
+//ambil jwt secret
 func getJWTSecret() string {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
@@ -26,6 +28,7 @@ func getJWTSecret() string {
 	return secret
 }
 
+//generate token
 func GenerateToken(user model.User) (string, error) {
 	claims := JWTClaims{
 		UserID: user.ID,
@@ -44,6 +47,26 @@ func GenerateToken(user model.User) (string, error) {
 	return token.SignedString(jwtSecret)
 }
 
+//generate refresh token
+func GenerateRefreshToken(user model.User) (string, error) {
+	claims := JWTClaims{
+		UserID: user.ID,
+		Email:  user.Email,
+		RoleID: user.RoleID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			Issuer:    "sistem-pelaporan-prestasi-mahasiswa-api",
+			Subject:   "user-refresh-token",
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtSecret)
+}
+
+//validate token
 func ValidateToken(tokenString string) (*JWTClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -63,6 +86,7 @@ func ValidateToken(tokenString string) (*JWTClaims, error) {
 	return nil, jwt.ErrInvalidKey
 }
 
+//extract token dari header
 func ExtractTokenFromHeader(authHeader string) string {
 	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
 		return authHeader[7:]
@@ -70,6 +94,7 @@ func ExtractTokenFromHeader(authHeader string) string {
 	return ""
 }
 
+//cek permission user
 func CheckUserPermission(db *sql.DB, userID string, permission string) (bool, error) {
 	query := `
 		SELECT COUNT(*) > 0

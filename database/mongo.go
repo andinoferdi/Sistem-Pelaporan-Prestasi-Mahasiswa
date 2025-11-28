@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+//koneksi mongodb
 func ConnectMongoDB() *mongo.Database {
 	mongoURI := os.Getenv("MONGODB_URI")
 	if mongoURI == "" {

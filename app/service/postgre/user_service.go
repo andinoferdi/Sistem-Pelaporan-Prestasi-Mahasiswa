@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// login service
 func LoginService(c *fiber.Ctx, db *sql.DB) error {
 	var req model.LoginRequest
 
@@ -19,25 +20,35 @@ func LoginService(c *fiber.Ctx, db *sql.DB) error {
 		})
 	}
 
-	if req.Email == "" || req.Password == "" {
+	if req.Username == "" || req.Password == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"message": "Email dan password wajib diisi.",
+			"message": "Username/email dan password wajib diisi.",
 		})
 	}
 
-	user, err := repository.GetUserByEmail(db, req.Email)
+	user, err := repository.GetUserByUsername(db, req.Username)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			user, err = repository.GetUserByEmail(db, req.Username)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+						"success": false,
+						"message": "Username/email atau password tidak valid.",
+					})
+				}
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"success": false,
+					"message": "Error mengambil data user dari database. Detail: " + err.Error(),
+				})
+			}
+		} else {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"success": false,
-				"message": "Email atau password tidak valid.",
+				"message": "Error mengambil data user dari database. Detail: " + err.Error(),
 			})
 		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"message": "Error mengambil data user dari database. Detail: " + err.Error(),
-		})
 	}
 
 	if !user.IsActive {
@@ -50,7 +61,23 @@ func LoginService(c *fiber.Ctx, db *sql.DB) error {
 	if !utilspostgre.CheckPassword(req.Password, user.PasswordHash) {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"success": false,
-			"message": "Email atau password tidak valid.",
+			"message": "Username/email atau password tidak valid.",
+		})
+	}
+
+	roleName, err := repository.GetRoleNameByID(db, user.RoleID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error mengambil data role dari database. Detail: " + err.Error(),
+		})
+	}
+
+	permissions, err := repository.GetUserPermissions(db, user.ID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error mengambil data permissions dari database. Detail: " + err.Error(),
 		})
 	}
 
@@ -62,23 +89,38 @@ func LoginService(c *fiber.Ctx, db *sql.DB) error {
 		})
 	}
 
-	user.PasswordHash = ""
+	refreshToken, err := utilspostgre.GenerateRefreshToken(*user)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error generating refresh token. Detail: " + err.Error(),
+		})
+	}
 
 	response := model.LoginResponse{
-		Success: true,
-		Message: "Login berhasil.",
+		Status: "success",
 		Data: struct {
-			User  model.User `json:"user"`
-			Token string     `json:"token"`
+			Token        string                  `json:"token"`
+			RefreshToken string                  `json:"refreshToken"`
+			User         model.LoginUserResponse `json:"user"`
 		}{
-			User:  *user,
-			Token: token,
+			Token:        token,
+			RefreshToken: refreshToken,
+			User: model.LoginUserResponse{
+				ID:          user.ID,
+				Username:    user.Username,
+				Email:       user.Email,
+				FullName:    user.FullName,
+				Role:        roleName,
+				Permissions: permissions,
+			},
 		},
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// ambil profile user
 func GetProfileService(c *fiber.Ctx, db *sql.DB) error {
 	userID, ok := c.Locals("user_id").(string)
 	if !ok {
@@ -123,6 +165,7 @@ func GetProfileService(c *fiber.Ctx, db *sql.DB) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// refresh token service
 func RefreshTokenService(c *fiber.Ctx, db *sql.DB) error {
 	userID, ok := c.Locals("user_id").(string)
 	if !ok {
@@ -170,10 +213,10 @@ func RefreshTokenService(c *fiber.Ctx, db *sql.DB) error {
 	})
 }
 
+// logout service
 func LogoutService(c *fiber.Ctx, db *sql.DB) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"message": "Logout berhasil.",
 	})
 }
-

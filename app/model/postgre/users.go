@@ -2,6 +2,7 @@ package model
 
 import "time"
 
+// user model
 type User struct {
 	ID           string    `json:"id"`
 	Username     string    `json:"username"`
@@ -14,6 +15,7 @@ type User struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
+// create user
 type CreateUserRequest struct {
 	Username string `json:"username" validate:"required"`
 	Email    string `json:"email" validate:"required,email"`
@@ -22,6 +24,7 @@ type CreateUserRequest struct {
 	RoleID   string `json:"role_id" validate:"required"`
 }
 
+// update user
 type UpdateUserRequest struct {
 	Username string `json:"username" validate:"required"`
 	Email    string `json:"email" validate:"required,email"`
@@ -30,32 +33,36 @@ type UpdateUserRequest struct {
 	IsActive *bool  `json:"is_active"`
 }
 
+// response semua user
 type GetAllUsersResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 	Data    []User `json:"data"`
 }
 
+// response user by id
 type GetUserByIDResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 	Data    User   `json:"data"`
 }
 
+// response create user
 type CreateUserResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 	Data    User   `json:"data"`
 }
 
+// response update user
 type UpdateUserResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 	Data    User   `json:"data"`
 }
 
+// response delete user
 type DeleteUserResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 }
-

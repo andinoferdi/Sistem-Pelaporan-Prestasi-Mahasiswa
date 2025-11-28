@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+//user routes
 func UserRoutes(app *fiber.App, db *sql.DB) {
 	auth := app.Group("/api/v1/auth")
 
