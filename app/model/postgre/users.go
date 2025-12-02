@@ -31,31 +31,26 @@ type UpdateUserRequest struct {
 }
 
 type GetAllUsersResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Data    []User `json:"data"`
+	Status string `json:"status"`
+	Data   []User `json:"data"`
 }
 
 type GetUserByIDResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Data    User   `json:"data"`
+	Status string `json:"status"`
+	Data   User   `json:"data"`
 }
 
 type CreateUserResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Data    User   `json:"data"`
+	Status string `json:"status"`
+	Data   User   `json:"data"`
 }
 
 type UpdateUserResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Data    User   `json:"data"`
+	Status string `json:"status"`
+	Data   User   `json:"data"`
 }
 
 type DeleteUserResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
+	Status string `json:"status"`
 }
 

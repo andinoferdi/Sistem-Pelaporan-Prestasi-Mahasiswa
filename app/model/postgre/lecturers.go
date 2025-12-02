@@ -22,31 +22,26 @@ type UpdateLecturerRequest struct {
 }
 
 type GetAllLecturersResponse struct {
-	Success bool       `json:"success"`
-	Message string     `json:"message"`
-	Data    []Lecturer `json:"data"`
+	Status string     `json:"status"`
+	Data   []Lecturer `json:"data"`
 }
 
 type GetLecturerByIDResponse struct {
-	Success bool     `json:"success"`
-	Message string   `json:"message"`
-	Data    Lecturer `json:"data"`
+	Status string   `json:"status"`
+	Data   Lecturer `json:"data"`
 }
 
 type CreateLecturerResponse struct {
-	Success bool     `json:"success"`
-	Message string   `json:"message"`
-	Data    Lecturer `json:"data"`
+	Status string   `json:"status"`
+	Data   Lecturer `json:"data"`
 }
 
 type UpdateLecturerResponse struct {
-	Success bool     `json:"success"`
-	Message string   `json:"message"`
-	Data    Lecturer `json:"data"`
+	Status string   `json:"status"`
+	Data   Lecturer `json:"data"`
 }
 
 type DeleteLecturerResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
+	Status string `json:"status"`
 }
 

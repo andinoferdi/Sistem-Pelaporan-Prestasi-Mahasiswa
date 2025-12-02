@@ -15,11 +15,11 @@ func UserRoutes(app *fiber.App, db *sql.DB) {
 		return servicepostgre.LoginService(c, db)
 	})
 
-	protected := auth.Group("", middlewarepostgre.AuthRequired())
-
-	protected.Post("/refresh", func(c *fiber.Ctx) error {
+	auth.Post("/refresh", func(c *fiber.Ctx) error {
 		return servicepostgre.RefreshTokenService(c, db)
 	})
+
+	protected := auth.Group("", middlewarepostgre.AuthRequired())
 
 	protected.Post("/logout", func(c *fiber.Ctx) error {
 		return servicepostgre.LogoutService(c, db)

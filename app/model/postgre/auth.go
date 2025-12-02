@@ -1,23 +1,34 @@
 package model
 
 type LoginRequest struct {
-	Email    string `json:"email" validate:"required,email"`
+	Username string `json:"username" validate:"required"`
 	Password string `json:"password" validate:"required"`
 }
 
+type LoginUserResponse struct {
+	ID          string   `json:"id"`
+	Username    string   `json:"username"`
+	FullName    string   `json:"fullName"`
+	Role        string   `json:"role"`
+	Permissions []string `json:"permissions"`
+}
+
 type LoginResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Data    struct {
-		User  User   `json:"user"`
-		Token string `json:"token"`
+	Status string `json:"status"`
+	Data   struct {
+		Token        string            `json:"token"`
+		RefreshToken string            `json:"refreshToken"`
+		User         LoginUserResponse `json:"user"`
 	} `json:"data"`
 }
 
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refreshToken" validate:"required"`
+}
+
 type GetProfileResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Data    struct {
+	Status string `json:"status"`
+	Data   struct {
 		UserID   string `json:"user_id"`
 		Username string `json:"username"`
 		Email    string `json:"email"`

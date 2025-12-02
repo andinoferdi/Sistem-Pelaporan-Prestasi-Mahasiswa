@@ -23,30 +23,25 @@ type UpdatePermissionRequest struct {
 }
 
 type GetAllPermissionsResponse struct {
-	Success bool         `json:"success"`
-	Message string       `json:"message"`
-	Data    []Permission `json:"data"`
+	Status string       `json:"status"`
+	Data   []Permission `json:"data"`
 }
 
 type GetPermissionByIDResponse struct {
-	Success bool       `json:"success"`
-	Message string     `json:"message"`
-	Data    Permission `json:"data"`
+	Status string     `json:"status"`
+	Data   Permission `json:"data"`
 }
 
 type CreatePermissionResponse struct {
-	Success bool       `json:"success"`
-	Message string     `json:"message"`
-	Data    Permission `json:"data"`
+	Status string     `json:"status"`
+	Data   Permission `json:"data"`
 }
 
 type UpdatePermissionResponse struct {
-	Success bool       `json:"success"`
-	Message string     `json:"message"`
-	Data    Permission `json:"data"`
+	Status string     `json:"status"`
+	Data   Permission `json:"data"`
 }
 
 type DeletePermissionResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
+	Status string `json:"status"`
 }

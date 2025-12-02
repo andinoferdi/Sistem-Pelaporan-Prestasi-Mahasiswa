@@ -42,14 +42,14 @@ OR (r.name = 'Dosen Wali' AND p.name IN (
 ));
 
 -- Insert Users (Total 7: 1 Admin, 3 Dosen Wali, 3 Mahasiswa)
--- Password untuk semua: admin123
+-- Password untuk semua: 12345678
 
 -- User Admin (1)
 INSERT INTO users (username, email, password_hash, full_name, role_id, is_active)
 SELECT 
     'admin',
     'admin@gmail.com',
-    '$2y$10$yQxfaJ6HFY71GnpBAJ6f8Om3m8tTMj1jRXmTwz6HDFLDv4uWAPm7e',
+    '$2a$12$iix7znEDxwTFySv47.9.2u6Uh3LYNBh/TcNRbBfqK0Sg24wWmdyja',
     'Administrator',
     r.id,
     true
@@ -59,15 +59,15 @@ LIMIT 1;
 
 -- Users Dosen Wali (3)
 INSERT INTO users (username, email, password_hash, full_name, role_id, is_active) VALUES
-('dosen1', 'dosen1@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Prof. Dr. Ahmad Wijaya, S.T., M.T.', (SELECT id FROM roles WHERE name = 'Dosen Wali'), true),
-('dosen2', 'dosen2@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Dr. Siti Nurhaliza, S.Kom., M.Kom.', (SELECT id FROM roles WHERE name = 'Dosen Wali'), true),
-('dosen3', 'dosen3@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Dr. Budi Santoso, S.T., M.Sc.', (SELECT id FROM roles WHERE name = 'Dosen Wali'), true);
+('dosen1', 'dosen1@gmail.com', '$2a$12$iix7znEDxwTFySv47.9.2u6Uh3LYNBh/TcNRbBfqK0Sg24wWmdyja', 'Prof. Dr. Ahmad Wijaya, S.T., M.T.', (SELECT id FROM roles WHERE name = 'Dosen Wali'), true),
+('dosen2', 'dosen2@gmail.com', '$2a$12$iix7znEDxwTFySv47.9.2u6Uh3LYNBh/TcNRbBfqK0Sg24wWmdyja', 'Dr. Siti Nurhaliza, S.Kom., M.Kom.', (SELECT id FROM roles WHERE name = 'Dosen Wali'), true),
+('dosen3', 'dosen3@gmail.com', '$2a$12$iix7znEDxwTFySv47.9.2u6Uh3LYNBh/TcNRbBfqK0Sg24wWmdyja', 'Dr. Budi Santoso, S.T., M.Sc.', (SELECT id FROM roles WHERE name = 'Dosen Wali'), true);
 
 -- Users Mahasiswa (3)
 INSERT INTO users (username, email, password_hash, full_name, role_id, is_active) VALUES
-('mahasiswa1', 'mahasiswa1@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Andi Pratama', (SELECT id FROM roles WHERE name = 'Mahasiswa'), true),
-('mahasiswa2', 'mahasiswa2@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Budi Setiawan', (SELECT id FROM roles WHERE name = 'Mahasiswa'), true),
-('mahasiswa3', 'mahasiswa3@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Citra Dewi', (SELECT id FROM roles WHERE name = 'Mahasiswa'), true);
+('mahasiswa1', 'mahasiswa1@gmail.com', '$2a$12$iix7znEDxwTFySv47.9.2u6Uh3LYNBh/TcNRbBfqK0Sg24wWmdyja', 'Andi Pratama', (SELECT id FROM roles WHERE name = 'Mahasiswa'), true),
+('mahasiswa2', 'mahasiswa2@gmail.com', '$2a$12$iix7znEDxwTFySv47.9.2u6Uh3LYNBh/TcNRbBfqK0Sg24wWmdyja', 'Budi Setiawan', (SELECT id FROM roles WHERE name = 'Mahasiswa'), true),
+('mahasiswa3', 'mahasiswa3@gmail.com', '$2a$12$iix7znEDxwTFySv47.9.2u6Uh3LYNBh/TcNRbBfqK0Sg24wWmdyja', 'Citra Dewi', (SELECT id FROM roles WHERE name = 'Mahasiswa'), true);
 
 -- Insert Lecturers (3 data untuk 3 dosen wali)
 INSERT INTO lecturers (user_id, lecturer_id, department)

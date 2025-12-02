@@ -11,16 +11,17 @@ import (
 
 func SuccessResponse(c *fiber.Ctx, statusCode int, message string, data interface{}) error {
 	return c.Status(statusCode).JSON(fiber.Map{
-		"success": true,
-		"message": message,
-		"data":    data,
+		"status": "success",
+		"data":   data,
 	})
 }
 
 func ErrorResponse(c *fiber.Ctx, statusCode int, message string) error {
 	return c.Status(statusCode).JSON(fiber.Map{
-		"success": false,
-		"message": message,
+		"status": "error",
+		"data": fiber.Map{
+			"message": message,
+		},
 	})
 }
 
@@ -42,6 +43,14 @@ func InternalServerErrorResponse(c *fiber.Ctx, message string) error {
 
 func ForbiddenResponse(c *fiber.Ctx, message string) error {
 	return ErrorResponse(c, fiber.StatusForbidden, message)
+}
+
+func ConflictResponse(c *fiber.Ctx, message string) error {
+	return ErrorResponse(c, fiber.StatusConflict, message)
+}
+
+func UnprocessableEntityResponse(c *fiber.Ctx, message string) error {
+	return ErrorResponse(c, fiber.StatusUnprocessableEntity, message)
 }
 
 func HandleDatabaseError(c *fiber.Ctx, err error) error {

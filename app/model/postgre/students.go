@@ -28,31 +28,26 @@ type UpdateStudentRequest struct {
 }
 
 type GetAllStudentsResponse struct {
-	Success bool      `json:"success"`
-	Message string    `json:"message"`
-	Data    []Student `json:"data"`
+	Status string    `json:"status"`
+	Data   []Student `json:"data"`
 }
 
 type GetStudentByIDResponse struct {
-	Success bool    `json:"success"`
-	Message string  `json:"message"`
-	Data    Student `json:"data"`
+	Status string  `json:"status"`
+	Data   Student `json:"data"`
 }
 
 type CreateStudentResponse struct {
-	Success bool    `json:"success"`
-	Message string  `json:"message"`
-	Data    Student `json:"data"`
+	Status string  `json:"status"`
+	Data   Student `json:"data"`
 }
 
 type UpdateStudentResponse struct {
-	Success bool    `json:"success"`
-	Message string  `json:"message"`
-	Data    Student `json:"data"`
+	Status string  `json:"status"`
+	Data   Student `json:"data"`
 }
 
 type DeleteStudentResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
+	Status string `json:"status"`
 }
 

@@ -20,31 +20,26 @@ type UpdateRoleRequest struct {
 }
 
 type GetAllRolesResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Data    []Role `json:"data"`
+	Status string `json:"status"`
+	Data   []Role `json:"data"`
 }
 
 type GetRoleByIDResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Data    Role   `json:"data"`
+	Status string `json:"status"`
+	Data   Role   `json:"data"`
 }
 
 type CreateRoleResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Data    Role   `json:"data"`
+	Status string `json:"status"`
+	Data   Role   `json:"data"`
 }
 
 type UpdateRoleResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Data    Role   `json:"data"`
+	Status string `json:"status"`
+	Data   Role   `json:"data"`
 }
 
 type DeleteRoleResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
+	Status string `json:"status"`
 }
 

@@ -11,18 +11,15 @@ type CreateRolePermissionRequest struct {
 }
 
 type GetAllRolePermissionsResponse struct {
-	Success bool             `json:"success"`
-	Message string           `json:"message"`
-	Data    []RolePermission `json:"data"`
+	Status string           `json:"status"`
+	Data   []RolePermission `json:"data"`
 }
 
 type CreateRolePermissionResponse struct {
-	Success bool           `json:"success"`
-	Message string         `json:"message"`
-	Data    RolePermission `json:"data"`
+	Status string         `json:"status"`
+	Data   RolePermission `json:"data"`
 }
 
 type DeleteRolePermissionResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
+	Status string `json:"status"`
 }

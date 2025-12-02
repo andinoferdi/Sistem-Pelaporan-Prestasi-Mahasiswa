@@ -39,31 +39,26 @@ type VerifyAchievementRequest struct {
 }
 
 type GetAllAchievementReferencesResponse struct {
-	Success bool                   `json:"success"`
-	Message string                 `json:"message"`
-	Data    []AchievementReference `json:"data"`
+	Status string                 `json:"status"`
+	Data   []AchievementReference `json:"data"`
 }
 
 type GetAchievementReferenceByIDResponse struct {
-	Success bool                 `json:"success"`
-	Message string               `json:"message"`
-	Data    AchievementReference `json:"data"`
+	Status string               `json:"status"`
+	Data   AchievementReference `json:"data"`
 }
 
 type CreateAchievementReferenceResponse struct {
-	Success bool                 `json:"success"`
-	Message string               `json:"message"`
-	Data    AchievementReference `json:"data"`
+	Status string               `json:"status"`
+	Data   AchievementReference `json:"data"`
 }
 
 type UpdateAchievementReferenceResponse struct {
-	Success bool                 `json:"success"`
-	Message string               `json:"message"`
-	Data    AchievementReference `json:"data"`
+	Status string               `json:"status"`
+	Data   AchievementReference `json:"data"`
 }
 
 type DeleteAchievementReferenceResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
+	Status string `json:"status"`
 }
 

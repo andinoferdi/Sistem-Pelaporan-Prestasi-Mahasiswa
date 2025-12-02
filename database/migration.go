@@ -15,6 +15,7 @@ import (
 
 const postgresSchemaSQL = `DROP EXTENSION IF EXISTS "uuid-ossp" CASCADE;
 
+DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS achievement_references CASCADE;
 DROP TABLE IF EXISTS students CASCADE;
 DROP TABLE IF EXISTS lecturers CASCADE;
@@ -107,6 +108,18 @@ CREATE INDEX idx_achievement_references_student_id ON achievement_references(stu
 CREATE INDEX idx_achievement_references_status ON achievement_references(status);
 CREATE INDEX idx_achievement_references_verified_by ON achievement_references(verified_by);
 
+CREATE TABLE refresh_tokens (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token TEXT UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
+CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
+
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -165,14 +178,14 @@ OR (r.name = 'Dosen Wali' AND p.name IN (
 ));
 
 -- Insert Users (Total 7: 1 Admin, 3 Dosen Wali, 3 Mahasiswa)
--- Password untuk semua: admin123
+-- Password untuk semua: 12345678
 
 -- User Admin (1)
 INSERT INTO users (username, email, password_hash, full_name, role_id, is_active)
 SELECT 
     'admin',
     'admin@gmail.com',
-    '$2y$10$yQxfaJ6HFY71GnpBAJ6f8Om3m8tTMj1jRXmTwz6HDFLDv4uWAPm7e',
+    '$2a$12$iix7znEDxwTFySv47.9.2u6Uh3LYNBh/TcNRbBfqK0Sg24wWmdyja',
     'Administrator',
     r.id,
     true
@@ -182,15 +195,15 @@ LIMIT 1;
 
 -- Users Dosen Wali (3)
 INSERT INTO users (username, email, password_hash, full_name, role_id, is_active) VALUES
-('dosen1', 'dosen1@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Prof. Dr. Ahmad Wijaya, S.T., M.T.', (SELECT id FROM roles WHERE name = 'Dosen Wali'), true),
-('dosen2', 'dosen2@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Dr. Siti Nurhaliza, S.Kom., M.Kom.', (SELECT id FROM roles WHERE name = 'Dosen Wali'), true),
-('dosen3', 'dosen3@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Dr. Budi Santoso, S.T., M.Sc.', (SELECT id FROM roles WHERE name = 'Dosen Wali'), true);
+('dosen1', 'dosen1@gmail.com', '$2a$12$iix7znEDxwTFySv47.9.2u6Uh3LYNBh/TcNRbBfqK0Sg24wWmdyja', 'Prof. Dr. Ahmad Wijaya, S.T., M.T.', (SELECT id FROM roles WHERE name = 'Dosen Wali'), true),
+('dosen2', 'dosen2@gmail.com', '$2a$12$iix7znEDxwTFySv47.9.2u6Uh3LYNBh/TcNRbBfqK0Sg24wWmdyja', 'Dr. Siti Nurhaliza, S.Kom., M.Kom.', (SELECT id FROM roles WHERE name = 'Dosen Wali'), true),
+('dosen3', 'dosen3@gmail.com', '$2a$12$iix7znEDxwTFySv47.9.2u6Uh3LYNBh/TcNRbBfqK0Sg24wWmdyja', 'Dr. Budi Santoso, S.T., M.Sc.', (SELECT id FROM roles WHERE name = 'Dosen Wali'), true);
 
 -- Users Mahasiswa (3)
 INSERT INTO users (username, email, password_hash, full_name, role_id, is_active) VALUES
-('mahasiswa1', 'mahasiswa1@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Andi Pratama', (SELECT id FROM roles WHERE name = 'Mahasiswa'), true),
-('mahasiswa2', 'mahasiswa2@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Budi Setiawan', (SELECT id FROM roles WHERE name = 'Mahasiswa'), true),
-('mahasiswa3', 'mahasiswa3@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Citra Dewi', (SELECT id FROM roles WHERE name = 'Mahasiswa'), true);
+('mahasiswa1', 'mahasiswa1@gmail.com', '$2a$12$iix7znEDxwTFySv47.9.2u6Uh3LYNBh/TcNRbBfqK0Sg24wWmdyja', 'Andi Pratama', (SELECT id FROM roles WHERE name = 'Mahasiswa'), true),
+('mahasiswa2', 'mahasiswa2@gmail.com', '$2a$12$iix7znEDxwTFySv47.9.2u6Uh3LYNBh/TcNRbBfqK0Sg24wWmdyja', 'Budi Setiawan', (SELECT id FROM roles WHERE name = 'Mahasiswa'), true),
+('mahasiswa3', 'mahasiswa3@gmail.com', '$2a$12$iix7znEDxwTFySv47.9.2u6Uh3LYNBh/TcNRbBfqK0Sg24wWmdyja', 'Citra Dewi', (SELECT id FROM roles WHERE name = 'Mahasiswa'), true);
 
 -- Insert Lecturers (3 data untuk 3 dosen wali)
 INSERT INTO lecturers (user_id, lecturer_id, department)
@@ -426,15 +439,15 @@ func createAchievementIndexes(ctx context.Context, db *mongo.Database) error {
 
 	indexModels := []mongo.IndexModel{
 		{
-			Keys:    bson.D{{Key: "student_id", Value: 1}},
+			Keys:    bson.D{{Key: "studentId", Value: 1}},
 			Options: options.Index().SetName("idx_student_id"),
 		},
 		{
-			Keys:    bson.D{{Key: "achievement_type", Value: 1}},
+			Keys:    bson.D{{Key: "achievementType", Value: 1}},
 			Options: options.Index().SetName("idx_achievement_type"),
 		},
 		{
-			Keys:    bson.D{{Key: "created_at", Value: -1}},
+			Keys:    bson.D{{Key: "createdAt", Value: -1}},
 			Options: options.Index().SetName("idx_created_at"),
 		},
 		{
@@ -497,111 +510,111 @@ func seedAchievementData(ctx context.Context, db *mongo.Database, studentIDs map
 
 	docs := []interface{}{
 		bson.M{
-			"_id":              id1,
-			"student_id":       studentMahasiswa1,
-			"achievement_type": "competition",
-			"title":            "Juara 1 Lomba Programming Nasional",
-			"description":      "Meraih juara 1 dalam kompetisi programming tingkat nasional",
+			"_id":            id1,
+			"studentId":      studentMahasiswa1,
+			"achievementType": "competition",
+			"title":          "Juara 1 Lomba Programming Nasional",
+			"description":    "Meraih juara 1 dalam kompetisi programming tingkat nasional",
 			"details": bson.M{
-				"competition_name":  "National Programming Contest 2025",
-				"competition_level": "national",
-				"rank":              1,
-				"medal_type":        "Gold",
-				"event_date":        time.Date(2025, time.January, 15, 0, 0, 0, 0, time.UTC),
-				"location":          "Jakarta",
-				"organizer":         "Kementerian Pendidikan",
+				"competitionName":  "National Programming Contest 2025",
+				"competitionLevel": "national",
+				"rank":             1,
+				"medalType":        "Gold",
+				"eventDate":        time.Date(2025, time.January, 15, 0, 0, 0, 0, time.UTC),
+				"location":         "Jakarta",
+				"organizer":        "Kementerian Pendidikan",
 			},
 			"attachments": []bson.M{
 				{
-					"file_name":   "sertifikat.pdf",
-					"file_url":    "/uploads/sertifikat.pdf",
-					"file_type":   "application/pdf",
-					"uploaded_at": time.Date(2025, time.January, 20, 10, 0, 0, 0, time.UTC),
+					"fileName":   "sertifikat.pdf",
+					"fileUrl":    "/uploads/sertifikat.pdf",
+					"fileType":   "application/pdf",
+					"uploadedAt": time.Date(2025, time.January, 20, 10, 0, 0, 0, time.UTC),
 				},
 			},
-			"tags":       []string{"programming", "competition", "national"},
-			"points":     100,
-			"created_at": time.Date(2025, time.January, 20, 10, 0, 0, 0, time.UTC),
-			"updated_at": time.Date(2025, time.January, 20, 10, 0, 0, 0, time.UTC),
+			"tags":      []string{"programming", "competition", "national"},
+			"points":    100,
+			"createdAt": time.Date(2025, time.January, 20, 10, 0, 0, 0, time.UTC),
+			"updatedAt": time.Date(2025, time.January, 20, 10, 0, 0, 0, time.UTC),
 		},
 		bson.M{
-			"_id":              id2,
-			"student_id":       studentMahasiswa1,
-			"achievement_type": "publication",
-			"title":            "Paper di International Conference",
-			"description":      "Publikasi paper di konferensi internasional",
+			"_id":            id2,
+			"studentId":      studentMahasiswa1,
+			"achievementType": "publication",
+			"title":          "Paper di International Conference",
+			"description":    "Publikasi paper di konferensi internasional",
 			"details": bson.M{
-				"publication_type":  "conference",
-				"publication_title": "Machine Learning Applications in Education",
-				"authors":           []string{"John Doe", "Jane Smith"},
-				"publisher":         "IEEE",
-				"issn":              "1234-5678",
-				"event_date":        time.Date(2025, time.February, 10, 0, 0, 0, 0, time.UTC),
+				"publicationType":  "conference",
+				"publicationTitle": "Machine Learning Applications in Education",
+				"authors":          []string{"John Doe", "Jane Smith"},
+				"publisher":        "IEEE",
+				"issn":             "1234-5678",
+				"eventDate":        time.Date(2025, time.February, 10, 0, 0, 0, 0, time.UTC),
 			},
-			"tags":       []string{"publication", "research", "conference"},
-			"points":     150,
-			"created_at": time.Date(2025, time.February, 15, 10, 0, 0, 0, time.UTC),
-			"updated_at": time.Date(2025, time.February, 15, 10, 0, 0, 0, time.UTC),
+			"tags":      []string{"publication", "research", "conference"},
+			"points":    150,
+			"createdAt": time.Date(2025, time.February, 15, 10, 0, 0, 0, time.UTC),
+			"updatedAt": time.Date(2025, time.February, 15, 10, 0, 0, 0, time.UTC),
 		},
 		bson.M{
-			"_id":              id3,
-			"student_id":       studentMahasiswa2,
-			"achievement_type": "organization",
-			"title":            "Ketua Himpunan Mahasiswa",
-			"description":      "Menjadi ketua himpunan mahasiswa selama 1 tahun",
+			"_id":            id3,
+			"studentId":      studentMahasiswa2,
+			"achievementType": "organization",
+			"title":          "Ketua Himpunan Mahasiswa",
+			"description":    "Menjadi ketua himpunan mahasiswa selama 1 tahun",
 			"details": bson.M{
-				"organization_name": "Himpunan Mahasiswa Teknik Informatika",
-				"position":          "Ketua",
+				"organizationName": "Himpunan Mahasiswa Teknik Informatika",
+				"position":         "Ketua",
 				"period": bson.M{
 					"start": time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
 					"end":   time.Date(2024, time.December, 31, 0, 0, 0, 0, time.UTC),
 				},
 			},
-			"tags":       []string{"organization", "leadership"},
-			"points":     80,
-			"created_at": time.Date(2025, time.January, 5, 10, 0, 0, 0, time.UTC),
-			"updated_at": time.Date(2025, time.January, 5, 10, 0, 0, 0, time.UTC),
+			"tags":      []string{"organization", "leadership"},
+			"points":    80,
+			"createdAt": time.Date(2025, time.January, 5, 10, 0, 0, 0, time.UTC),
+			"updatedAt": time.Date(2025, time.January, 5, 10, 0, 0, 0, time.UTC),
 		},
 		bson.M{
-			"_id":              id4,
-			"student_id":       studentMahasiswa2,
-			"achievement_type": "certification",
-			"title":            "AWS Certified Solutions Architect",
-			"description":      "Sertifikasi AWS Solutions Architect Associate",
+			"_id":            id4,
+			"studentId":      studentMahasiswa2,
+			"achievementType": "certification",
+			"title":          "AWS Certified Solutions Architect",
+			"description":    "Sertifikasi AWS Solutions Architect Associate",
 			"details": bson.M{
-				"certification_name":   "AWS Certified Solutions Architect - Associate",
-				"issued_by":            "Amazon Web Services",
-				"certification_number": "AWS-123456789",
-				"valid_until":          time.Date(2027, time.December, 31, 0, 0, 0, 0, time.UTC),
-				"event_date":           time.Date(2025, time.March, 1, 0, 0, 0, 0, time.UTC),
+				"certificationName":   "AWS Certified Solutions Architect - Associate",
+				"issuedBy":            "Amazon Web Services",
+				"certificationNumber": "AWS-123456789",
+				"validUntil":          time.Date(2027, time.December, 31, 0, 0, 0, 0, time.UTC),
+				"eventDate":           time.Date(2025, time.March, 1, 0, 0, 0, 0, time.UTC),
 			},
 			"attachments": []bson.M{
 				{
-					"file_name":   "aws_certificate.pdf",
-					"file_url":    "/uploads/aws_certificate.pdf",
-					"file_type":   "application/pdf",
-					"uploaded_at": time.Date(2025, time.March, 5, 10, 0, 0, 0, time.UTC),
+					"fileName":   "aws_certificate.pdf",
+					"fileUrl":    "/uploads/aws_certificate.pdf",
+					"fileType":   "application/pdf",
+					"uploadedAt": time.Date(2025, time.March, 5, 10, 0, 0, 0, time.UTC),
 				},
 			},
-			"tags":       []string{"certification", "aws", "cloud"},
-			"points":     120,
-			"created_at": time.Date(2025, time.March, 5, 10, 0, 0, 0, time.UTC),
-			"updated_at": time.Date(2025, time.March, 5, 10, 0, 0, 0, time.UTC),
+			"tags":      []string{"certification", "aws", "cloud"},
+			"points":    120,
+			"createdAt": time.Date(2025, time.March, 5, 10, 0, 0, 0, time.UTC),
+			"updatedAt": time.Date(2025, time.March, 5, 10, 0, 0, 0, time.UTC),
 		},
 		bson.M{
-			"_id":              id5,
-			"student_id":       studentMahasiswa3,
-			"achievement_type": "academic",
-			"title":            "IPK 3.95 Semester 7",
-			"description":      "Mencapai IPK 3.95 pada semester 7",
+			"_id":            id5,
+			"studentId":      studentMahasiswa3,
+			"achievementType": "academic",
+			"title":          "IPK 3.95 Semester 7",
+			"description":    "Mencapai IPK 3.95 pada semester 7",
 			"details": bson.M{
-				"score":      3.95,
-				"event_date": time.Date(2025, time.January, 31, 0, 0, 0, 0, time.UTC),
+				"score":     3.95,
+				"eventDate": time.Date(2025, time.January, 31, 0, 0, 0, 0, time.UTC),
 			},
-			"tags":       []string{"academic", "gpa"},
-			"points":     50,
-			"created_at": time.Date(2025, time.February, 1, 10, 0, 0, 0, time.UTC),
-			"updated_at": time.Date(2025, time.February, 1, 10, 0, 0, 0, time.UTC),
+			"tags":      []string{"academic", "gpa"},
+			"points":    50,
+			"createdAt": time.Date(2025, time.February, 1, 10, 0, 0, 0, time.UTC),
+			"updatedAt": time.Date(2025, time.February, 1, 10, 0, 0, 0, time.UTC),
 		},
 	}
 

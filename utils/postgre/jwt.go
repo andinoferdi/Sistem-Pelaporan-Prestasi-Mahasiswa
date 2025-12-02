@@ -70,6 +70,28 @@ func ExtractTokenFromHeader(authHeader string) string {
 	return ""
 }
 
+func GenerateRefreshToken(user model.User) (string, error) {
+	claims := JWTClaims{
+		UserID: user.ID,
+		Email:  user.Email,
+		RoleID: user.RoleID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			Issuer:    "sistem-pelaporan-prestasi-mahasiswa-api",
+			Subject:   "refresh-token",
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtSecret)
+}
+
+func ValidateRefreshToken(tokenString string) (*JWTClaims, error) {
+	return ValidateToken(tokenString)
+}
+
 func CheckUserPermission(db *sql.DB, userID string, permission string) (bool, error) {
 	query := `
 		SELECT COUNT(*) > 0
