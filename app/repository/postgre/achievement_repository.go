@@ -33,7 +33,7 @@ func GetAchievementReferenceByMongoID(db *sql.DB, mongoID string) (*model.Achiev
 		SELECT id, student_id, mongo_achievement_id, status, submitted_at,
 		       verified_at, verified_by, rejection_note, created_at, updated_at
 		FROM achievement_references
-		WHERE mongo_achievement_id = $1
+		WHERE mongo_achievement_id = $1 AND status != 'deleted'
 	`
 
 	ref := new(model.AchievementReference)
@@ -106,7 +106,7 @@ func GetAchievementReferenceByStudentID(db *sql.DB, studentID string) ([]model.A
 		SELECT id, student_id, mongo_achievement_id, status, submitted_at,
 		       verified_at, verified_by, rejection_note, created_at, updated_at
 		FROM achievement_references
-		WHERE student_id = $1
+		WHERE student_id = $1 AND status != 'deleted'
 		ORDER BY created_at DESC
 	`
 
@@ -135,5 +135,94 @@ func GetAchievementReferenceByStudentID(db *sql.DB, studentID string) ([]model.A
 	}
 
 	return references, nil
+}
+
+func GetAchievementReferencesByAdvisorID(db *sql.DB, advisorID string) ([]model.AchievementReference, error) {
+	query := `
+		SELECT ar.id, ar.student_id, ar.mongo_achievement_id, ar.status, ar.submitted_at,
+		       ar.verified_at, ar.verified_by, ar.rejection_note, ar.created_at, ar.updated_at
+		FROM achievement_references ar
+		INNER JOIN students s ON ar.student_id = s.id
+		WHERE s.advisor_id = $1 AND ar.status != 'deleted'
+		ORDER BY ar.created_at DESC
+	`
+
+	rows, err := db.Query(query, advisorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var references []model.AchievementReference
+	for rows.Next() {
+		var ref model.AchievementReference
+		err := rows.Scan(
+			&ref.ID, &ref.StudentID, &ref.MongoAchievementID, &ref.Status,
+			&ref.SubmittedAt, &ref.VerifiedAt, &ref.VerifiedBy, &ref.RejectionNote,
+			&ref.CreatedAt, &ref.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		references = append(references, ref)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return references, nil
+}
+
+func GetAllAchievementReferences(db *sql.DB) ([]model.AchievementReference, error) {
+	query := `
+		SELECT id, student_id, mongo_achievement_id, status, submitted_at,
+		       verified_at, verified_by, rejection_note, created_at, updated_at
+		FROM achievement_references
+		WHERE status != 'deleted'
+		ORDER BY created_at DESC
+	`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var references []model.AchievementReference
+	for rows.Next() {
+		var ref model.AchievementReference
+		err := rows.Scan(
+			&ref.ID, &ref.StudentID, &ref.MongoAchievementID, &ref.Status,
+			&ref.SubmittedAt, &ref.VerifiedAt, &ref.VerifiedBy, &ref.RejectionNote,
+			&ref.CreatedAt, &ref.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		references = append(references, ref)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return references, nil
+}
+
+func GetAchievementStats(db *sql.DB) (int, int, error) {
+	query := `
+		SELECT 
+			COUNT(*) as total,
+			COUNT(*) FILTER (WHERE status = 'verified') as verified
+		FROM achievement_references
+		WHERE status != 'deleted'
+	`
+	var total, verified int
+	err := db.QueryRow(query).Scan(&total, &verified)
+	if err != nil {
+		return 0, 0, err
+	}
+	return total, verified, nil
 }
 

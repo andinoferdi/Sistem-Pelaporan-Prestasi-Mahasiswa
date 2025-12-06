@@ -15,7 +15,7 @@ DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TYPE achievement_status AS ENUM ('draft', 'submitted', 'verified', 'rejected');
+CREATE TYPE achievement_status AS ENUM ('draft', 'submitted', 'verified', 'rejected', 'deleted');
 
 CREATE TABLE roles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

@@ -10,6 +10,10 @@ import (
 )
 
 func AchievementRoutes(app *fiber.App, postgresDB *sql.DB, mongoDB *mongo.Database) {
+	app.Get("/api/v1/achievements/stats", func(c *fiber.Ctx) error {
+		return servicepostgre.GetAchievementStatsService(c, postgresDB)
+	})
+
 	achievements := app.Group("/api/v1/achievements", middlewarepostgre.AuthRequired())
 
 	achievements.Get("", func(c *fiber.Ctx) error {

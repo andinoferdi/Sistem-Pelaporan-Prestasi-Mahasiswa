@@ -153,3 +153,23 @@ func GetRoleName(db *sql.DB, roleID string) (string, error) {
 	return roleName, nil
 }
 
+func GetLecturerByUserID(db *sql.DB, userID string) (*model.Lecturer, error) {
+	query := `
+		SELECT l.id, l.user_id, l.lecturer_id, l.department, l.created_at
+		FROM lecturers l
+		WHERE l.user_id = $1
+	`
+
+	lecturer := new(model.Lecturer)
+	err := db.QueryRow(query, userID).Scan(
+		&lecturer.ID, &lecturer.UserID, &lecturer.LecturerID,
+		&lecturer.Department, &lecturer.CreatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return lecturer, nil
+}
+

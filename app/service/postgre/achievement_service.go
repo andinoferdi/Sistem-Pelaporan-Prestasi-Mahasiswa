@@ -410,12 +410,12 @@ func DeleteAchievementService(c *fiber.Ctx, postgresDB *sql.DB, mongoDB *mongo.D
 		})
 	}
 
-	err = repositorypostgre.DeleteAchievementReference(postgresDB, ref.ID)
+	err = repositorypostgre.UpdateAchievementReferenceStatus(postgresDB, ref.ID, modelpostgre.AchievementStatusDeleted, nil)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status": "error",
 			"data": fiber.Map{
-				"message": "Error menghapus reference prestasi. Detail: " + err.Error(),
+				"message": "Error mengupdate status prestasi menjadi deleted. Detail: " + err.Error(),
 			},
 		})
 	}
@@ -561,31 +561,71 @@ func GetAchievementsService(c *fiber.Ctx, postgresDB *sql.DB, mongoDB *mongo.Dat
 		})
 	}
 
-	if roleName != "Mahasiswa" {
-		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+	var references []modelpostgre.AchievementReference
+
+	if roleName == "Mahasiswa" {
+		student, err := repositorypostgre.GetStudentByUserID(postgresDB, userID)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status": "error",
 			"data": fiber.Map{
-				"message": "Akses ditolak. Hanya mahasiswa yang dapat melihat prestasi.",
+					"message": "Error mengambil data student. Detail: " + err.Error(),
 			},
 		})
 	}
 
-	student, err := repositorypostgre.GetStudentByUserID(postgresDB, userID)
+		references, err = repositorypostgre.GetAchievementReferenceByStudentID(postgresDB, student.ID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status": "error",
 			"data": fiber.Map{
-				"message": "Error mengambil data student. Detail: " + err.Error(),
+					"message": "Error mengambil achievement references. Detail: " + err.Error(),
+				},
+			})
+		}
+	} else if roleName == "Dosen Wali" {
+		lecturer, err := repositorypostgre.GetLecturerByUserID(postgresDB, userID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+					"status": "error",
+					"data": fiber.Map{
+						"message": "Data dosen wali tidak ditemukan. Pastikan user memiliki profil dosen wali.",
+					},
+				})
+			}
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"status": "error",
+				"data": fiber.Map{
+					"message": "Error mengambil data dosen wali. Detail: " + err.Error(),
 			},
 		})
 	}
 
-	references, err := repositorypostgre.GetAchievementReferenceByStudentID(postgresDB, student.ID)
+		references, err = repositorypostgre.GetAchievementReferencesByAdvisorID(postgresDB, lecturer.ID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status": "error",
 			"data": fiber.Map{
 				"message": "Error mengambil achievement references. Detail: " + err.Error(),
+				},
+			})
+		}
+	} else if roleName == "Admin" {
+		references, err = repositorypostgre.GetAllAchievementReferences(postgresDB)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"status": "error",
+				"data": fiber.Map{
+					"message": "Error mengambil achievement references. Detail: " + err.Error(),
+				},
+			})
+		}
+	} else {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"status": "error",
+			"data": fiber.Map{
+				"message": "Akses ditolak. Role tidak memiliki akses untuk melihat prestasi.",
 			},
 		})
 	}
@@ -680,15 +720,6 @@ func GetAchievementByIDService(c *fiber.Ctx, postgresDB *sql.DB, mongoDB *mongo.
 		})
 	}
 
-	if roleName != "Mahasiswa" {
-		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-			"status": "error",
-			"data": fiber.Map{
-				"message": "Akses ditolak. Hanya mahasiswa yang dapat melihat prestasi.",
-			},
-		})
-	}
-
 	mongoID := c.Params("id")
 	if mongoID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -717,6 +748,7 @@ func GetAchievementByIDService(c *fiber.Ctx, postgresDB *sql.DB, mongoDB *mongo.
 		})
 	}
 
+	if roleName == "Mahasiswa" {
 	studentID, err := repositorypostgre.GetStudentIDByUserID(postgresDB, userID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -732,6 +764,57 @@ func GetAchievementByIDService(c *fiber.Ctx, postgresDB *sql.DB, mongoDB *mongo.
 			"status": "error",
 			"data": fiber.Map{
 				"message": "Akses ditolak. Anda hanya dapat melihat prestasi milik Anda sendiri.",
+				},
+			})
+		}
+	} else if roleName == "Dosen Wali" {
+		lecturer, err := repositorypostgre.GetLecturerByUserID(postgresDB, userID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+					"status": "error",
+					"data": fiber.Map{
+						"message": "Data dosen wali tidak ditemukan. Pastikan user memiliki profil dosen wali.",
+					},
+				})
+			}
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"status": "error",
+				"data": fiber.Map{
+					"message": "Error mengambil data dosen wali. Detail: " + err.Error(),
+				},
+			})
+		}
+
+		var student modelpostgre.Student
+		query := `SELECT id, user_id, student_id, program_study, academic_year, advisor_id, created_at FROM students WHERE id = $1`
+		err = postgresDB.QueryRow(query, ref.StudentID).Scan(
+			&student.ID, &student.UserID, &student.StudentID,
+			&student.ProgramStudy, &student.AcademicYear, &student.AdvisorID,
+			&student.CreatedAt,
+		)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"status": "error",
+				"data": fiber.Map{
+					"message": "Error mengambil data student. Detail: " + err.Error(),
+				},
+			})
+		}
+
+		if student.AdvisorID != lecturer.ID {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"status": "error",
+				"data": fiber.Map{
+					"message": "Akses ditolak. Anda hanya dapat melihat prestasi mahasiswa bimbingan Anda.",
+				},
+			})
+		}
+	} else if roleName != "Admin" {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"status": "error",
+			"data": fiber.Map{
+				"message": "Akses ditolak. Role tidak memiliki akses untuk melihat prestasi.",
 			},
 		})
 	}
@@ -926,5 +1009,33 @@ func UpdateAchievementService(c *fiber.Ctx, postgresDB *sql.DB, mongoDB *mongo.D
 	}
 
 	return c.Status(fiber.StatusOK).JSON(responseData)
+}
+
+func GetAchievementStatsService(c *fiber.Ctx, postgresDB *sql.DB) error {
+	total, verified, err := repositorypostgre.GetAchievementStats(postgresDB)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status": "error",
+			"data": fiber.Map{
+				"message": "Error mengambil statistik prestasi. Detail: " + err.Error(),
+			},
+		})
+	}
+
+	percentage := 0
+	if total > 0 {
+		percentage = int((float64(verified) / float64(total)) * 100)
+	}
+
+	response := fiber.Map{
+		"status": "success",
+		"data": fiber.Map{
+			"total":      total,
+			"verified":   verified,
+			"percentage": percentage,
+		},
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
